@@ -1,23 +1,16 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { useTrip, HotelOption } from '@/contexts/TripContext';
-import AppHeader from '@/components/AppHeader';
-import WizardStepper from '@/components/WizardStepper';
+import DashboardLayout from '@/components/DashboardLayout';
+import WizardProgress from '@/components/WizardProgress';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
-import { ArrowLeft, Check, Sparkles } from 'lucide-react';
+import { ArrowLeft, Check, Sparkles, Building2, ArrowRight, Moon } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
-const WIZARD_STEPS = [
-  { label: 'Trip Details', path: '/app' },
-  { label: 'Flights', path: '/app/trip/:tripId/flights' },
-  { label: 'Hotels', path: '/app/trip/:tripId/hotels' },
-  { label: 'Roadmap', path: '/app/trip/:tripId/roadmap' },
-];
-
-// Mock hotel options
 const MOCK_HOTELS: HotelOption[] = [
   {
     id: '1',
@@ -66,7 +59,6 @@ const Hotels = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
-    // Simulate API call - GET /trips/{trip_id}/hotel-options
     const fetchHotels = async () => {
       await new Promise(resolve => setTimeout(resolve, 1200));
       setHotelOptions(MOCK_HOTELS);
@@ -80,7 +72,6 @@ const Hotels = () => {
     setIsSubmitting(true);
     
     try {
-      // Simulate API call - POST /trips/{trip_id}/select-hotel
       await new Promise(resolve => setTimeout(resolve, 500));
       setSelectedHotel(hotel);
       toast({ title: 'Hotel selected', description: hotel.title });
@@ -105,101 +96,137 @@ const Hotels = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <AppHeader />
-      
-      <main className="container mx-auto px-4 py-8">
-        <WizardStepper steps={WIZARD_STEPS} currentStep={2} />
+    <DashboardLayout currentStep={2}>
+      <div className="p-6 lg:p-8 max-w-4xl mx-auto">
+        <div className="mb-8">
+          <WizardProgress currentStep={2} />
+        </div>
 
-        <div className="mx-auto max-w-3xl">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={handleBack}
-            className="mb-6"
-          >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {tripDetails?.tripType === 'hotel' ? 'Edit trip details' : 'Back to flights'}
-          </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={handleBack}
+          className="mb-6 -ml-2"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          {tripDetails?.tripType === 'hotel' ? 'Edit trip details' : 'Back to flights'}
+        </Button>
 
-          <h1 className="mb-2 text-2xl font-bold text-foreground">Choose your hotel</h1>
-          <p className="mb-8 text-muted-foreground">
-            Select the best hotel redemption for your stay
-          </p>
-
-          {isLoading ? (
-            <div className="space-y-4">
-              {[1, 2, 3].map((i) => (
-                <Card key={i} className="border-border">
-                  <CardContent className="p-6">
-                    <Skeleton className="h-6 w-48 mb-4" />
-                    <Skeleton className="h-8 w-32 mb-2" />
-                    <Skeleton className="h-4 w-full" />
-                  </CardContent>
-                </Card>
-              ))}
+        <div className="mb-8">
+          <div className="flex items-center gap-3 mb-2">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-primary/10">
+              <Building2 className="h-5 w-5 text-primary" />
             </div>
-          ) : (
-            <div className="space-y-4">
-              {hotelOptions.map((hotel) => (
-                <Card
-                  key={hotel.id}
-                  className={`border-border cursor-pointer transition-all hover:border-primary/50 ${
-                    selected?.id === hotel.id ? 'ring-2 ring-primary border-primary' : ''
-                  }`}
-                  onClick={() => handleSelect(hotel)}
-                >
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between mb-4">
-                      <div>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Choose Your Hotel</h1>
+              <p className="text-muted-foreground">
+                {tripDetails?.destination} · 3 nights
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {isLoading ? (
+          <div className="space-y-4">
+            {[1, 2, 3, 4].map((i) => (
+              <Card key={i} className="border-border">
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between">
+                    <div className="space-y-3 flex-1">
+                      <Skeleton className="h-5 w-32" />
+                      <Skeleton className="h-8 w-40" />
+                      <Skeleton className="h-4 w-full max-w-md" />
+                    </div>
+                    <Skeleton className="h-10 w-24" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {hotelOptions.map((hotel) => (
+              <Card
+                key={hotel.id}
+                className={cn(
+                  'border-border cursor-pointer transition-all hover:shadow-md',
+                  selected?.id === hotel.id 
+                    ? 'ring-2 ring-primary border-primary shadow-md' 
+                    : 'hover:border-primary/50'
+                )}
+                onClick={() => handleSelect(hotel)}
+              >
+                <CardContent className="p-6">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
                         {hotel.recommended && (
-                          <Badge className="mb-2 bg-primary/10 text-primary border-0">
-                            <Sparkles className="mr-1 h-3 w-3" />
+                          <Badge className="bg-primary/10 text-primary border-0 gap-1">
+                            <Sparkles className="h-3 w-3" />
                             AI Recommended
                           </Badge>
                         )}
-                        <h3 className="text-lg font-semibold text-foreground">{hotel.title}</h3>
                       </div>
-                      {selected?.id === hotel.id && (
-                        <div className="flex h-6 w-6 items-center justify-center rounded-full bg-primary">
-                          <Check className="h-4 w-4 text-primary-foreground" />
-                        </div>
-                      )}
+                      
+                      <h3 className="text-lg font-semibold text-foreground mb-1">
+                        {hotel.title}
+                      </h3>
+                      
+                      <div className="flex items-baseline gap-2 mb-3">
+                        {hotel.totalPoints > 0 ? (
+                          <>
+                            <span className="text-2xl font-bold text-foreground">
+                              {hotel.totalPoints.toLocaleString()}
+                            </span>
+                            <span className="text-muted-foreground">points total</span>
+                            <div className="flex items-center gap-1 text-sm text-muted-foreground">
+                              <Moon className="h-3 w-3" />
+                              {hotel.pointsPerNight.toLocaleString()}/night × {hotel.nights}
+                            </div>
+                          </>
+                        ) : (
+                          <span className="text-2xl font-bold text-foreground">Cash booking</span>
+                        )}
+                      </div>
+                      
+                      <p className="text-sm text-muted-foreground">{hotel.reason}</p>
                     </div>
-                    <div className="mb-3">
-                      {hotel.totalPoints > 0 ? (
-                        <>
-                          <span className="text-2xl font-bold text-foreground">
-                            {hotel.totalPoints.toLocaleString()}
-                          </span>
-                          <span className="text-muted-foreground"> points total</span>
-                          <span className="text-sm text-muted-foreground ml-2">
-                            ({hotel.pointsPerNight.toLocaleString()}/night × {hotel.nights} nights)
-                          </span>
-                        </>
-                      ) : (
-                        <span className="text-2xl font-bold text-foreground">Cash booking</span>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">{hotel.reason}</p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
 
-          <div className="mt-8 flex justify-end">
-            <Button
-              onClick={handleContinue}
-              disabled={!selected || isSubmitting}
-              size="lg"
-            >
-              Continue to roadmap
-            </Button>
+                    <div className="flex items-center gap-3">
+                      {selected?.id === hotel.id ? (
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary">
+                          <Check className="h-5 w-5 text-primary-foreground" />
+                        </div>
+                      ) : (
+                        <Button variant="outline" size="sm">
+                          Select
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
           </div>
+        )}
+
+        <div className="mt-8 flex items-center justify-between pt-4 border-t border-border">
+          <Button variant="ghost" onClick={handleBack}>
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back
+          </Button>
+          <Button
+            onClick={handleContinue}
+            disabled={!selected || isSubmitting}
+            size="lg"
+            className="min-w-[160px]"
+          >
+            Continue
+            <ArrowRight className="ml-2 h-4 w-4" />
+          </Button>
         </div>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

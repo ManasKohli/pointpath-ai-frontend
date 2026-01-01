@@ -1,23 +1,17 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useTrip, TripDetails as TripDetailsType } from '@/contexts/TripContext';
-import AppHeader from '@/components/AppHeader';
-import WizardStepper from '@/components/WizardStepper';
+import { useTrip } from '@/contexts/TripContext';
+import DashboardLayout from '@/components/DashboardLayout';
+import WizardProgress from '@/components/WizardProgress';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Loader2 } from 'lucide-react';
+import { Loader2, MapPin, Calendar, Users, Plane, Building2, CreditCard, Armchair } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-
-const WIZARD_STEPS = [
-  { label: 'Trip Details', path: '/app' },
-  { label: 'Flights', path: '/app/trip/:tripId/flights' },
-  { label: 'Hotels', path: '/app/trip/:tripId/hotels' },
-  { label: 'Roadmap', path: '/app/trip/:tripId/roadmap' },
-];
+import { cn } from '@/lib/utils';
 
 const TripDetails = () => {
   const navigate = useNavigate();
@@ -64,7 +58,6 @@ const TripDetails = () => {
     setIsLoading(true);
 
     try {
-      // Simulate API call - POST /trips
       await new Promise(resolve => setTimeout(resolve, 1000));
       const mockTripId = `trip_${Date.now()}`;
       
@@ -80,7 +73,6 @@ const TripDetails = () => {
         cabinPreference: formData.cabinPreference || undefined,
       });
 
-      // Route based on trip type
       if (formData.tripType === 'hotel') {
         navigate(`/app/trip/${mockTripId}/hotels`);
       } else {
@@ -93,152 +85,294 @@ const TripDetails = () => {
     }
   };
 
-  return (
-    <div className="min-h-screen bg-background">
-      <AppHeader />
-      
-      <main className="container mx-auto px-4 py-8">
-        <WizardStepper steps={WIZARD_STEPS} currentStep={0} />
+  const tripTypes = [
+    { value: 'flight', label: 'Flight only', icon: Plane },
+    { value: 'hotel', label: 'Hotel only', icon: Building2 },
+    { value: 'both', label: 'Flight + Hotel', icon: MapPin },
+  ];
 
-        <Card className="mx-auto max-w-2xl border-border">
-          <CardHeader>
-            <CardTitle>Trip Details</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Origin & Destination */}
+  const cabinOptions = [
+    { value: 'economy', label: 'Economy' },
+    { value: 'premium', label: 'Premium Economy' },
+    { value: 'business', label: 'Business' },
+  ];
+
+  const pointsPrograms = [
+    { id: 'Amex MR (Canada)', label: 'Amex MR', color: 'bg-[#006FCF]' },
+    { id: 'Aeroplan', label: 'Aeroplan', color: 'bg-[#00A550]' },
+    { id: 'RBC Avion', label: 'RBC Avion', color: 'bg-[#003168]' },
+  ];
+
+  return (
+    <DashboardLayout currentStep={0}>
+      <div className="p-6 lg:p-8 max-w-4xl mx-auto">
+        <div className="mb-8">
+          <WizardProgress currentStep={0} />
+        </div>
+
+        <div className="mb-8">
+          <h1 className="text-2xl font-bold text-foreground mb-2">Plan Your Trip</h1>
+          <p className="text-muted-foreground">
+            Enter your trip details and we'll find the best redemption options for you.
+          </p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* Route Card */}
+          <Card className="border-border">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                  <MapPin className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">Route</CardTitle>
+                  <CardDescription>Where are you flying?</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="origin">Origin</Label>
+                  <Label htmlFor="origin">From</Label>
                   <Input
                     id="origin"
                     placeholder="YYZ"
                     value={formData.origin}
                     onChange={(e) => setFormData(prev => ({ ...prev, origin: e.target.value }))}
+                    className="h-11"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="destination">Destination</Label>
+                  <Label htmlFor="destination">To</Label>
                   <Input
                     id="destination"
                     placeholder="City or airport code"
                     value={formData.destination}
                     onChange={(e) => setFormData(prev => ({ ...prev, destination: e.target.value }))}
+                    className="h-11"
                     required
                   />
                 </div>
               </div>
+            </CardContent>
+          </Card>
 
-              {/* Dates */}
+          {/* Dates Card */}
+          <Card className="border-border">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                  <Calendar className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">Dates</CardTitle>
+                  <CardDescription>When are you traveling?</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
               <div className="grid gap-4 sm:grid-cols-2">
                 <div className="space-y-2">
-                  <Label htmlFor="departDate">Departure date</Label>
+                  <Label htmlFor="departDate">Departure</Label>
                   <Input
                     id="departDate"
                     type="date"
                     value={formData.departDate}
                     onChange={(e) => setFormData(prev => ({ ...prev, departDate: e.target.value }))}
+                    className="h-11"
                     required
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="returnDate">Return date (optional)</Label>
+                  <Label htmlFor="returnDate">Return (optional)</Label>
                   <Input
                     id="returnDate"
                     type="date"
                     value={formData.returnDate}
                     onChange={(e) => setFormData(prev => ({ ...prev, returnDate: e.target.value }))}
+                    className="h-11"
                   />
                 </div>
               </div>
+            </CardContent>
+          </Card>
 
-              {/* Travelers */}
-              <div className="space-y-2">
-                <Label htmlFor="travelers">Travelers</Label>
-                <Input
-                  id="travelers"
-                  type="number"
-                  min={1}
-                  max={9}
-                  value={formData.travelers}
-                  onChange={(e) => setFormData(prev => ({ ...prev, travelers: parseInt(e.target.value) || 1 }))}
-                />
+          {/* Travelers Card */}
+          <Card className="border-border">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                  <Users className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">Travelers</CardTitle>
+                  <CardDescription>How many people are traveling?</CardDescription>
+                </div>
               </div>
-
-              {/* Trip Type */}
-              <div className="space-y-3">
-                <Label>Trip type</Label>
-                <RadioGroup
-                  value={formData.tripType}
-                  onValueChange={(value) => setFormData(prev => ({ ...prev, tripType: value as 'flight' | 'hotel' | 'both' }))}
-                  className="flex flex-wrap gap-4"
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-4">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setFormData(prev => ({ ...prev, travelers: Math.max(1, prev.travelers - 1) }))}
+                  disabled={formData.travelers <= 1}
                 >
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="flight" id="flight-only" />
-                    <Label htmlFor="flight-only" className="font-normal cursor-pointer">Flight only</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="hotel" id="hotel-only" />
-                    <Label htmlFor="hotel-only" className="font-normal cursor-pointer">Hotel only</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="both" id="both" />
-                    <Label htmlFor="both" className="font-normal cursor-pointer">Flight + Hotel</Label>
-                  </div>
-                </RadioGroup>
+                  -
+                </Button>
+                <span className="text-xl font-semibold w-12 text-center">{formData.travelers}</span>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="icon"
+                  onClick={() => setFormData(prev => ({ ...prev, travelers: Math.min(9, prev.travelers + 1) }))}
+                  disabled={formData.travelers >= 9}
+                >
+                  +
+                </Button>
+                <span className="text-muted-foreground">
+                  {formData.travelers === 1 ? 'traveler' : 'travelers'}
+                </span>
               </div>
+            </CardContent>
+          </Card>
 
-              {/* Points Programs */}
-              <div className="space-y-3">
-                <Label>Points you have</Label>
-                <div className="flex flex-wrap gap-4">
-                  {['Amex MR (Canada)', 'Aeroplan', 'RBC Avion'].map((program) => (
-                    <div key={program} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={program}
-                        checked={formData.pointsPrograms.includes(program)}
-                        onCheckedChange={(checked) => handlePointsChange(program, checked as boolean)}
-                      />
-                      <Label htmlFor={program} className="font-normal cursor-pointer">{program}</Label>
-                    </div>
-                  ))}
+          {/* Trip Type Card */}
+          <Card className="border-border">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                  <Plane className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">Trip Type</CardTitle>
+                  <CardDescription>What are you looking for?</CardDescription>
                 </div>
               </div>
+            </CardHeader>
+            <CardContent>
+              <RadioGroup
+                value={formData.tripType}
+                onValueChange={(value) => setFormData(prev => ({ ...prev, tripType: value as 'flight' | 'hotel' | 'both' }))}
+                className="grid gap-3 sm:grid-cols-3"
+              >
+                {tripTypes.map((type) => {
+                  const Icon = type.icon;
+                  return (
+                    <Label
+                      key={type.value}
+                      htmlFor={type.value}
+                      className={cn(
+                        'flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-all',
+                        formData.tripType === type.value
+                          ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                          : 'border-border hover:border-primary/50'
+                      )}
+                    >
+                      <RadioGroupItem value={type.value} id={type.value} className="sr-only" />
+                      <Icon className={cn(
+                        'h-5 w-5',
+                        formData.tripType === type.value ? 'text-primary' : 'text-muted-foreground'
+                      )} />
+                      <span className="font-medium">{type.label}</span>
+                    </Label>
+                  );
+                })}
+              </RadioGroup>
+            </CardContent>
+          </Card>
 
-              {/* Cabin Preference */}
-              {formData.tripType !== 'hotel' && (
-                <div className="space-y-3">
-                  <Label>Cabin preference (optional)</Label>
-                  <RadioGroup
-                    value={formData.cabinPreference}
-                    onValueChange={(value) => setFormData(prev => ({ ...prev, cabinPreference: value as '' | 'economy' | 'premium' | 'business' }))}
-                    className="flex flex-wrap gap-4"
+          {/* Points Programs Card */}
+          <Card className="border-border">
+            <CardHeader className="pb-4">
+              <div className="flex items-center gap-2">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                  <CreditCard className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                  <CardTitle className="text-base">Points Programs</CardTitle>
+                  <CardDescription>Which programs do you have points in?</CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-3 sm:grid-cols-3">
+                {pointsPrograms.map((program) => (
+                  <Label
+                    key={program.id}
+                    htmlFor={program.id}
+                    className={cn(
+                      'flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-all',
+                      formData.pointsPrograms.includes(program.id)
+                        ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                        : 'border-border hover:border-primary/50'
+                    )}
                   >
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="economy" id="economy" />
-                      <Label htmlFor="economy" className="font-normal cursor-pointer">Economy</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="premium" id="premium" />
-                      <Label htmlFor="premium" className="font-normal cursor-pointer">Premium Economy</Label>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <RadioGroupItem value="business" id="business" />
-                      <Label htmlFor="business" className="font-normal cursor-pointer">Business</Label>
-                    </div>
-                  </RadioGroup>
-                </div>
-              )}
+                    <Checkbox
+                      id={program.id}
+                      checked={formData.pointsPrograms.includes(program.id)}
+                      onCheckedChange={(checked) => handlePointsChange(program.id, checked as boolean)}
+                    />
+                    <div className={cn('h-3 w-3 rounded-full', program.color)} />
+                    <span className="font-medium">{program.label}</span>
+                  </Label>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Find options
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </main>
-    </div>
+          {/* Cabin Preference Card */}
+          {formData.tripType !== 'hotel' && (
+            <Card className="border-border">
+              <CardHeader className="pb-4">
+                <div className="flex items-center gap-2">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                    <Armchair className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-base">Cabin Preference</CardTitle>
+                    <CardDescription>Optional - Select your preferred cabin class</CardDescription>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <RadioGroup
+                  value={formData.cabinPreference}
+                  onValueChange={(value) => setFormData(prev => ({ ...prev, cabinPreference: value as '' | 'economy' | 'premium' | 'business' }))}
+                  className="grid gap-3 sm:grid-cols-3"
+                >
+                  {cabinOptions.map((cabin) => (
+                    <Label
+                      key={cabin.value}
+                      htmlFor={`cabin-${cabin.value}`}
+                      className={cn(
+                        'flex items-center justify-center gap-2 p-4 rounded-lg border cursor-pointer transition-all',
+                        formData.cabinPreference === cabin.value
+                          ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                          : 'border-border hover:border-primary/50'
+                      )}
+                    >
+                      <RadioGroupItem value={cabin.value} id={`cabin-${cabin.value}`} className="sr-only" />
+                      <span className="font-medium">{cabin.label}</span>
+                    </Label>
+                  ))}
+                </RadioGroup>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Submit Button */}
+          <div className="flex justify-end pt-4">
+            <Button type="submit" size="lg" disabled={isLoading} className="min-w-[200px]">
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              Find Options
+            </Button>
+          </div>
+        </form>
+      </div>
+    </DashboardLayout>
   );
 };
 
